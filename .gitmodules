@@ -2,6 +2,6 @@
 	path = skills
 	url = https://github.com/anil-wu/skills.git
 
-[submodule "game_agent"]
-	path = game_agent
+[submodule "agents"]
+	path = agents
 	url = https://github.com/anil-wu/metai-game-code-agent.git
