@@ -8,3 +8,6 @@
 [submodule "web"]
 	path = web
 	url = git@github.com:anil-wu/metai-game-front.git
+[submodule "service"]
+	path = service
+	url = git@github.com:anil-wu/sparkx-service.git
