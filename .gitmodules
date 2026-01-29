@@ -5,3 +5,6 @@
 [submodule "agents"]
 	path = agents
 	url = https://github.com/anil-wu/metai-game-code-agent.git
+[submodule "web"]
+	path = web
+	url = git@github.com:anil-wu/metai-game-front.git
