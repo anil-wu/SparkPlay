@@ -44,9 +44,16 @@ jobs:
 
       - name: Login ACR
         shell: bash
+        env:
+          ACR_USERNAME: ${{ secrets.ALIYUN_ACR_USERNAME }}
+          ACR_PASSWORD: ${{ secrets.ALIYUN_ACR_PASSWORD }}
         run: |
           set -euo pipefail
-          echo "${{ secrets.ALIYUN_ACR_PASSWORD }}" | docker login "${ACR_REGISTRY}" -u "${{ secrets.ALIYUN_ACR_USERNAME }}" --password-stdin
+          if [ -z "${ACR_REGISTRY:-}" ] || [ -z "${ACR_NAMESPACE:-}" ] || [ -z "${ACR_USERNAME:-}" ] || [ -z "${ACR_PASSWORD:-}" ]; then
+            echo "Missing required secrets: ALIYUN_ACR_REGISTRY, ALIYUN_ACR_NAMESPACE, ALIYUN_ACR_USERNAME, ALIYUN_ACR_PASSWORD" >&2
+            exit 1
+          fi
+          printf '%s' "${ACR_PASSWORD}" | docker login "${ACR_REGISTRY}" -u "${ACR_USERNAME}" --password-stdin
 
       - name: Check Dockerfile
         id: check
@@ -99,9 +106,17 @@ jobs:
           ACR_PASSWORD: ${{ secrets.ALIYUN_ACR_PASSWORD }}
         run: |
           set -euo pipefail
+          if [ -z "${ACR_REGISTRY:-}" ] || [ -z "${ACR_NAMESPACE:-}" ] || [ -z "${ACR_USERNAME:-}" ] || [ -z "${ACR_PASSWORD:-}" ]; then
+            echo "Missing required secrets: ALIYUN_ACR_REGISTRY, ALIYUN_ACR_NAMESPACE, ALIYUN_ACR_USERNAME, ALIYUN_ACR_PASSWORD" >&2
+            exit 1
+          fi
+          if [ -z "${DEPLOY_HOST:-}" ] || [ -z "${DEPLOY_USER:-}" ] || [ -z "${DEPLOY_DIR:-}" ]; then
+            echo "Missing required secrets: ALIYUN_DEPLOY_HOST, ALIYUN_DEPLOY_USER, ALIYUN_DEPLOY_DIR" >&2
+            exit 1
+          fi
           ssh "${DEPLOY_USER}@${DEPLOY_HOST}" "bash -s" <<EOF
           set -euo pipefail
-          echo "${ACR_PASSWORD}" | docker login "${ACR_REGISTRY}" -u "${ACR_USERNAME}" --password-stdin
+          printf '%s' "${ACR_PASSWORD}" | docker login "${ACR_REGISTRY}" -u "${ACR_USERNAME}" --password-stdin
           cd "${DEPLOY_DIR}"
           if command -v docker-compose >/dev/null 2>&1; then
             docker-compose pull
