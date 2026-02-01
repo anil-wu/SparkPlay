@@ -133,8 +133,8 @@ jobs:
           fi
 
           DOCKER_CONFIG_DIR="$(mktemp -d)"
-          export DOCKER_CONFIG="${DOCKER_CONFIG_DIR}"
-          trap 'rm -rf "${DOCKER_CONFIG_DIR}"' EXIT
+          export DOCKER_CONFIG="\${DOCKER_CONFIG_DIR}"
+          trap 'rm -rf "\${DOCKER_CONFIG_DIR}"' EXIT
           printf '%s' "${ACR_PASSWORD}" | docker login "${ACR_REGISTRY}" -u "${ACR_USERNAME}" --password-stdin
           if command -v docker-compose >/dev/null 2>&1; then
             docker-compose pull
