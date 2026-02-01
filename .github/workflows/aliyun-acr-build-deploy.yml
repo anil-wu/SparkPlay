@@ -122,8 +122,20 @@ jobs:
           fi
           ssh "${DEPLOY_USER}@${DEPLOY_HOST}" "bash -s" <<EOF
           set -euo pipefail
-          printf '%s' "${ACR_PASSWORD}" | docker login "${ACR_REGISTRY}" -u "${ACR_USERNAME}" --password-stdin
+          if [ ! -d "${DEPLOY_DIR}" ]; then
+            echo "DEPLOY_DIR does not exist: ${DEPLOY_DIR}" >&2
+            exit 1
+          fi
           cd "${DEPLOY_DIR}"
+          if [ ! -f docker-compose.yml ] && [ ! -f docker-compose.yaml ] && [ ! -f compose.yml ] && [ ! -f compose.yaml ]; then
+            echo "No compose file found in DEPLOY_DIR: ${DEPLOY_DIR}" >&2
+            exit 1
+          fi
+
+          DOCKER_CONFIG_DIR="$(mktemp -d)"
+          export DOCKER_CONFIG="${DOCKER_CONFIG_DIR}"
+          trap 'rm -rf "${DOCKER_CONFIG_DIR}"' EXIT
+          printf '%s' "${ACR_PASSWORD}" | docker login "${ACR_REGISTRY}" -u "${ACR_USERNAME}" --password-stdin
           if command -v docker-compose >/dev/null 2>&1; then
             docker-compose pull
             docker-compose up -d --remove-orphans
