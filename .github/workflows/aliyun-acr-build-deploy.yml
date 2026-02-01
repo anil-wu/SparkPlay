@@ -132,6 +132,10 @@ jobs:
             exit 1
           fi
 
+          ACR_REGISTRY_CLEAN="${ACR_REGISTRY#http://}"
+          ACR_REGISTRY_CLEAN="${ACR_REGISTRY_CLEAN#https://}"
+          ACR_REGISTRY_CLEAN="${ACR_REGISTRY_CLEAN%/}"
+
           REMOTE_DIR="${DEPLOY_DIR:-sparkx}"
           ssh "${DEPLOY_USER}@${DEPLOY_HOST}" "mkdir -p \"${REMOTE_DIR}\""
           scp ./deploy/docker-compose.yml "${DEPLOY_USER}@${DEPLOY_HOST}:${REMOTE_DIR}/docker-compose.yml"
@@ -143,10 +147,7 @@ jobs:
             echo "No compose file found in remote dir: ${REMOTE_DIR}" >&2
             exit 1
           fi
-          ACR_REGISTRY_CLEAN="${ACR_REGISTRY#http://}"
-          ACR_REGISTRY_CLEAN="${ACR_REGISTRY_CLEAN#https://}"
-          ACR_REGISTRY_CLEAN="${ACR_REGISTRY_CLEAN%/}"
-          export ACR_REGISTRY="\${ACR_REGISTRY_CLEAN}"
+          export ACR_REGISTRY="${ACR_REGISTRY_CLEAN}"
           export ACR_NAMESPACE="${ACR_NAMESPACE}"
 
           DOCKER_CONFIG_DIR="$(mktemp -d)"
