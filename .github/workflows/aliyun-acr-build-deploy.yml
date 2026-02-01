@@ -64,6 +64,15 @@ jobs:
           fi
           printf '%s' "${ACR_PASSWORD}" | docker login "${ACR_REGISTRY}" -u "${ACR_USERNAME}" --password-stdin
 
+      - name: Mirror postgres image
+        if: matrix.component == 'web'
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker pull postgres:15.13-alpine
+          docker tag postgres:15.13-alpine "${ACR_REGISTRY}/${ACR_NAMESPACE}/postgres:15.13-alpine"
+          docker push "${ACR_REGISTRY}/${ACR_NAMESPACE}/postgres:15.13-alpine"
+
       - name: Check Dockerfile
         id: check
         shell: bash
@@ -149,6 +158,7 @@ jobs:
           fi
           export ACR_REGISTRY="${ACR_REGISTRY_CLEAN}"
           export ACR_NAMESPACE="${ACR_NAMESPACE}"
+          export POSTGRES_IMAGE="${ACR_REGISTRY}/${ACR_NAMESPACE}/postgres:15.13-alpine"
 
           DOCKER_CONFIG_DIR="$(mktemp -d)"
           export DOCKER_CONFIG="\${DOCKER_CONFIG_DIR}"
