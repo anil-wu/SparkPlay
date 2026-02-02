@@ -38,7 +38,7 @@ SparkPlay/
 
 - 仓库包含 git submodules，工作流会 `checkout` 并递归拉取 submodules
 - 仅对存在 `Dockerfile` 的组件执行构建（当前仅 `web/` 有 `Dockerfile`，`agents/` 与 `service/` 会自动跳过）
-- 会将 `postgres:15.13-alpine` 镜像同步到 ACR，供部署时使用
+- 会将 `mysql:8.4` 镜像同步到 ACR，供部署时使用
 
 需要配置的 Secrets（Settings → Secrets and variables → Actions）：
 
@@ -53,13 +53,13 @@ SparkPlay/
 `deploy/docker-compose.yml` 当前包含：
 
 - `web`：`ACR_REGISTRY/ACR_NAMESPACE/sparkplay-web:${WEB_TAG:-latest}`，默认映射 `80 -> 3000`
-- `postgres`：默认 `postgres:15.13-alpine`，也支持通过 `POSTGRES_IMAGE` 指定 ACR 内镜像
+- `mysql`：默认 `mysql:8.4`，也支持通过 `MYSQL_IMAGE` 指定 ACR 内镜像
 
 常用环境变量：
 
 - `ACR_REGISTRY`、`ACR_NAMESPACE`：镜像仓库地址与命名空间（使用私有 ACR 时必填）
 - `WEB_TAG`、`WEB_PORT`：Web 镜像 tag 与对外端口
-- `POSTGRES_IMAGE`、`POSTGRES_DB`、`POSTGRES_USER`、`POSTGRES_PASSWORD`、`POSTGRES_PORT`
+- `MYSQL_IMAGE`、`MYSQL_DATABASE`、`MYSQL_USER`、`MYSQL_PASSWORD`、`MYSQL_ROOT_PASSWORD`、`MYSQL_PORT`
 
 在服务器上手动部署/更新（示例）：
 

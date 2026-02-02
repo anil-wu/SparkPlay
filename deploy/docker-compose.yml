@@ -5,23 +5,24 @@ services:
     restart: unless-stopped
     ports:
       - "${WEB_PORT:-80}:3000"
-  postgres:
-    image: ${POSTGRES_IMAGE:-postgres:15.13-alpine}
-    container_name: sparkplay-postgres
+  mysql:
+    image: ${MYSQL_IMAGE:-mysql:8.4}
+    container_name: sparkplay-mysql
     restart: unless-stopped
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-sparkplay}
-      POSTGRES_USER: ${POSTGRES_USER:-sparkplay}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-sparkplay}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-sparkplay}
+      MYSQL_USER: ${MYSQL_USER:-sparkplay}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-sparkplay}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-sparkplay}
     ports:
-      - "${POSTGRES_PORT:-6543}:5432"
+      - "${MYSQL_PORT:-3306}:3306"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - mysql_data:/var/lib/mysql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
       interval: 10s
       timeout: 5s
       retries: 5
 
 volumes:
-  postgres_data:
+  mysql_data:
