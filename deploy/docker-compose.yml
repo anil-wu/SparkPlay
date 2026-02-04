@@ -5,6 +5,8 @@ services:
     restart: unless-stopped
     ports:
       - "${SERVICE_PORT:-8890}:8890"
+    environment:
+      - MYSQL_DSN=sparkplay:sparkplay@tcp(mysql:3306)/sparkplay?charset=utf8mb4&parseTime=true&loc=Local
     depends_on:
       mysql:
         condition: service_healthy
