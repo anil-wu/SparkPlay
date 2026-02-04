@@ -6,6 +6,8 @@ on:
       - main
       - master
   workflow_dispatch:
+  repository_dispatch:
+    types: [submodule-update]
 
 permissions:
   contents: read
@@ -48,6 +50,12 @@ jobs:
           ssh-key: ${{ secrets.GH_SUBMODULES_SSH_PRIVATE_KEY }}
 
       - uses: docker/setup-buildx-action@v3
+      - name: Update all submodules to latest
+        shell: bash
+        run: |
+          set -euo pipefail
+          git submodule update --remote --recursive
+
       - name: Normalize ACR registry
         shell: bash
         run: |
@@ -95,12 +103,29 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          
+          # Default to github.sha (parent repo)
+          TAG="${{ github.sha }}"
+          
+          # Check component submodule
+          CHECK_DIR="${{ matrix.context }}"
           if [ "${{ matrix.component }}" == "web-api" ]; then
-            TAG=$(git ls-tree HEAD service | awk '{print $3}')
-            echo "Using service submodule hash for web-api: ${TAG}"
-          else
-            TAG="${{ github.sha }}"
+             CHECK_DIR="service"
+          elif [ "${{ matrix.component }}" == "agents" ]; then
+             CHECK_DIR="agents"
+          elif [ "${{ matrix.component }}" == "web" ]; then
+             CHECK_DIR="web"
+          elif [ "${{ matrix.component }}" == "service" ]; then
+             CHECK_DIR="service"
           fi
+          
+          if [ -d "$CHECK_DIR" ]; then
+             cd "$CHECK_DIR"
+             TAG=$(git rev-parse HEAD)
+             cd ..
+             echo "Using submodule HEAD for tag: ${TAG}"
+          fi
+          
           echo "image_tag=${TAG}" >> "$GITHUB_OUTPUT"
 
       - name: Build and push
@@ -161,9 +186,20 @@ jobs:
           ACR_REGISTRY_CLEAN="${ACR_REGISTRY_CLEAN%/}"
 
           # Calculate tags
-          WEB_API_TAG=$(git ls-tree HEAD service | awk '{print $3}')
-          SERVICE_TAG="${{ github.sha }}"
-          WEB_TAG="${{ github.sha }}"
+          WEB_API_TAG="latest"
+          if [ -d "service" ]; then
+             cd service && WEB_API_TAG=$(git rev-parse HEAD) && cd ..
+          fi
+          
+          SERVICE_TAG="latest"
+          if [ -d "service" ]; then
+             cd service && SERVICE_TAG=$(git rev-parse HEAD) && cd ..
+          fi
+
+          WEB_TAG="latest"
+          if [ -d "web" ]; then
+             cd web && WEB_TAG=$(git rev-parse HEAD) && cd ..
+          fi
 
           REMOTE_DIR="${DEPLOY_DIR:-sparkx}"
           ssh "${DEPLOY_USER}@${DEPLOY_HOST}" "mkdir -p \"${REMOTE_DIR}\""
