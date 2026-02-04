@@ -90,6 +90,19 @@ jobs:
             echo "exists=false" >> "$GITHUB_OUTPUT"
           fi
 
+      - name: Get Image Tag
+        id: tag
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "${{ matrix.component }}" == "web-api" ]; then
+            TAG=$(git ls-tree HEAD service | awk '{print $3}')
+            echo "Using service submodule hash for web-api: ${TAG}"
+          else
+            TAG="${{ github.sha }}"
+          fi
+          echo "image_tag=${TAG}" >> "$GITHUB_OUTPUT"
+
       - name: Build and push
         if: steps.check.outputs.exists == 'true'
         uses: docker/build-push-action@v6
@@ -102,7 +115,7 @@ jobs:
             COMMIT_SHA=${{ github.sha }}
           tags: |
             ${{ env.ACR_REGISTRY }}/${{ env.ACR_NAMESPACE }}/${{ matrix.image }}:latest
-            ${{ env.ACR_REGISTRY }}/${{ env.ACR_NAMESPACE }}/${{ matrix.image }}:${{ github.sha }}
+            ${{ env.ACR_REGISTRY }}/${{ env.ACR_NAMESPACE }}/${{ matrix.image }}:${{ steps.tag.outputs.image_tag }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -147,6 +160,11 @@ jobs:
           ACR_REGISTRY_CLEAN="${ACR_REGISTRY_CLEAN#https://}"
           ACR_REGISTRY_CLEAN="${ACR_REGISTRY_CLEAN%/}"
 
+          # Calculate tags
+          WEB_API_TAG=$(git ls-tree HEAD service | awk '{print $3}')
+          SERVICE_TAG="${{ github.sha }}"
+          WEB_TAG="${{ github.sha }}"
+
           REMOTE_DIR="${DEPLOY_DIR:-sparkx}"
           ssh "${DEPLOY_USER}@${DEPLOY_HOST}" "mkdir -p \"${REMOTE_DIR}\""
           scp ./deploy/docker-compose.yml "${DEPLOY_USER}@${DEPLOY_HOST}:${REMOTE_DIR}/docker-compose.yml"
@@ -161,6 +179,9 @@ jobs:
           export ACR_REGISTRY="${ACR_REGISTRY_CLEAN}"
           export ACR_NAMESPACE="${ACR_NAMESPACE}"
           export MYSQL_IMAGE="${ACR_REGISTRY}/${ACR_NAMESPACE}/mysql:8.4"
+          export WEB_API_TAG="${WEB_API_TAG}"
+          export SERVICE_TAG="${SERVICE_TAG}"
+          export WEB_TAG="${WEB_TAG}"
 
           DOCKER_CONFIG_DIR="$(mktemp -d)"
           export DOCKER_CONFIG="\${DOCKER_CONFIG_DIR}"
