@@ -24,6 +24,7 @@ services:
       - "${WEB_API_PORT:-6002}:8080"
   mysql:
     image: ${MYSQL_IMAGE:-mysql:8.4}
+    command: --bind-address=0.0.0.0
     container_name: sparkplay-mysql
     restart: unless-stopped
     environment:
