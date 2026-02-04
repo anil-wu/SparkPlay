@@ -4,7 +4,7 @@ services:
     container_name: sparkplay-service
     restart: unless-stopped
     ports:
-      - "${SERVICE_PORT:-8890}:8890"
+      - "${SERVICE_PORT:-6001}:8890"
     environment:
       - MYSQL_DSN=sparkplay:sparkplay@tcp(mysql:3306)/sparkplay?charset=utf8mb4&parseTime=true&loc=Local
     depends_on:
@@ -21,7 +21,7 @@ services:
     container_name: sparkplay-web-api
     restart: unless-stopped
     ports:
-      - "${WEB_API_PORT:-8080}:8080"
+      - "${WEB_API_PORT:-6002}:8080"
   mysql:
     image: ${MYSQL_IMAGE:-mysql:8.4}
     container_name: sparkplay-mysql
@@ -32,7 +32,7 @@ services:
       MYSQL_PASSWORD: ${MYSQL_PASSWORD:-sparkplay}
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-sparkplay}
     ports:
-      - "${MYSQL_PORT:-3306}:3306"
+      - "${MYSQL_PORT:-6003}:3306"
     volumes:
       - mysql_data:/var/lib/mysql
     healthcheck:
