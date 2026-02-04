@@ -11,3 +11,4 @@
 [submodule "service"]
 	path = service
 	url = git@github.com:anil-wu/sparkx-service.git
+	branch = feature/login
