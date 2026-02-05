@@ -43,9 +43,25 @@ jobs:
             dockerfile: web_api/Dockerfile
     steps:
       - uses: actions/checkout@v4
-        with:
-          submodules: recursive
-          ssh-key: ${{ secrets.GH_SUBMODULES_SSH_PRIVATE_KEY }}
+
+      - name: Clone submodules independently
+        shell: bash
+        env:
+          GH_SSH_KEY: ${{ secrets.GH_SUBMODULES_SSH_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+          # Setup SSH key
+          mkdir -p ~/.ssh
+          echo "$GH_SSH_KEY" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan github.com >> ~/.ssh/known_hosts 2>/dev/null || true
+          # Remove empty submodule directories if exist
+          rm -rf skills agents web service
+          # Clone each submodule independently
+          git clone https://github.com/anil-wu/skills.git skills
+          git clone https://github.com/anil-wu/metai-game-code-agent.git agents
+          git clone git@github.com:anil-wu/metai-game-front.git web
+          git clone -b feature/login git@github.com:anil-wu/sparkx-service.git service
 
       - uses: docker/setup-buildx-action@v3
       - name: Normalize ACR registry
@@ -96,8 +112,17 @@ jobs:
         run: |
           set -euo pipefail
           if [ "${{ matrix.component }}" == "web-api" ]; then
-            TAG=$(git ls-tree HEAD service | awk '{print $3}')
-            echo "Using service submodule hash for web-api: ${TAG}"
+            TAG=$(cd service && git rev-parse HEAD)
+            echo "Using service repo hash for web-api: ${TAG}"
+          elif [ "${{ matrix.component }}" == "service" ]; then
+            TAG=$(cd service && git rev-parse HEAD)
+            echo "Using service repo hash: ${TAG}"
+          elif [ "${{ matrix.component }}" == "web" ]; then
+            TAG=$(cd web && git rev-parse HEAD)
+            echo "Using web repo hash: ${TAG}"
+          elif [ "${{ matrix.component }}" == "agents" ]; then
+            TAG=$(cd agents && git rev-parse HEAD)
+            echo "Using agents repo hash: ${TAG}"
           else
             TAG="${{ github.sha }}"
           fi
@@ -125,6 +150,25 @@ jobs:
     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
     steps:
       - uses: actions/checkout@v4
+
+      - name: Clone submodules independently
+        shell: bash
+        env:
+          GH_SSH_KEY: ${{ secrets.GH_SUBMODULES_SSH_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+          # Setup SSH key
+          mkdir -p ~/.ssh
+          echo "$GH_SSH_KEY" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan github.com >> ~/.ssh/known_hosts 2>/dev/null || true
+          # Remove empty submodule directories if exist
+          rm -rf skills agents web service
+          # Clone each submodule independently
+          git clone https://github.com/anil-wu/skills.git skills
+          git clone https://github.com/anil-wu/metai-game-code-agent.git agents
+          git clone git@github.com:anil-wu/metai-game-front.git web
+          git clone -b feature/login git@github.com:anil-wu/sparkx-service.git service
 
       - uses: webfactory/ssh-agent@v0.9.0
         with:
@@ -160,10 +204,10 @@ jobs:
           ACR_REGISTRY_CLEAN="${ACR_REGISTRY_CLEAN#https://}"
           ACR_REGISTRY_CLEAN="${ACR_REGISTRY_CLEAN%/}"
 
-          # Calculate tags
-          WEB_API_TAG=$(git ls-tree HEAD service | awk '{print $3}')
-          SERVICE_TAG="${{ github.sha }}"
-          WEB_TAG="${{ github.sha }}"
+          # Calculate tags - use latest commit hash from each cloned repo
+          WEB_API_TAG=$(cd service && git rev-parse HEAD)
+          SERVICE_TAG=$(cd service && git rev-parse HEAD)
+          WEB_TAG=$(cd web && git rev-parse HEAD)
 
           REMOTE_DIR="${DEPLOY_DIR:-sparkx}"
           ssh "${DEPLOY_USER}@${DEPLOY_HOST}" "mkdir -p \"${REMOTE_DIR}\""
