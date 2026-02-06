@@ -19,11 +19,14 @@ SparkPlay/
 ├── .github/                 # CI/CD（GitHub Actions）
 ├── design/                  # 平台设计文档与数据表拆分索引
 ├── deploy/                  # 部署配置（docker-compose）
-├── agents/                  # 智能体相关实现与模板
+├── scripts/                 # 仓库管理脚本
 ├── web/                     # Web 前端（编辑器/工作台）
-├── service/                 # 后端服务（如有）
-└── skills/                  # 可复用技能定义
+├── repos.yaml               # 仓库配置文件（替代 git submodules）
+└── README.md
 ```
+
+> **注意**：本项目使用 `repos.yaml` + 脚本管理依赖仓库，不再使用 Git Submodules。
+> 相关仓库（agents, service, skills）通过 [repos.yaml](repos.yaml) 配置，使用 [scripts/fetch-repos.ps1](scripts/fetch-repos.ps1) 或 [scripts/fetch-repos.sh](scripts/fetch-repos.sh) 拉取。
 
 项目数据表设计索引：`design/SparkX_Table_Design.md`
 
@@ -36,13 +39,11 @@ SparkPlay/
 
 工作流要点：
 
-- 仓库包含 git submodules，工作流会 `checkout` 并递归拉取 submodules
-- 仅对存在 `Dockerfile` 的组件执行构建（当前仅 `web/` 有 `Dockerfile`，`agents/` 与 `service/` 会自动跳过）
+- 不再使用 git submodules，依赖仓库通过 `repos.yaml` 管理
+- 仅对存在 `Dockerfile` 的组件执行构建（当前仅 `web/` 有 `Dockerfile`）
 - 会将 `mysql:8.4` 镜像同步到 ACR，供部署时使用
 
 需要配置的 Secrets（Settings → Secrets and variables → Actions）：
-
-- `GH_SUBMODULES_SSH_PRIVATE_KEY`：用于拉取私有 submodule 的 SSH 私钥
 - `ALIYUN_ACR_REGISTRY` / `ALIYUN_ACR_NAMESPACE` / `ALIYUN_ACR_USERNAME` / `ALIYUN_ACR_PASSWORD`：ACR 登录信息
 - `ALIYUN_DEPLOY_SSH_PRIVATE_KEY`：用于登录部署服务器的 SSH 私钥
 - `ALIYUN_DEPLOY_HOST` / `ALIYUN_DEPLOY_USER`：部署服务器地址与用户
@@ -68,3 +69,56 @@ cd /path/to/deploy-dir
 docker compose -f docker-compose.yml pull
 docker compose -f docker-compose.yml up -d --remove-orphans
 ```
+
+## 仓库管理
+
+本项目使用 `repos.yaml` 配置文件管理依赖仓库，替代了传统的 Git Submodules。
+
+### 配置文件
+
+[repos.yaml](repos.yaml) 定义了所有依赖仓库的信息：
+
+```yaml
+repositories:
+  - name: skills
+    path: skills
+    url: https://github.com/anil-wu/skills.git
+    branch: main
+
+  - name: agents
+    path: agents
+    url: https://github.com/anil-wu/metai-game-code-agent.git
+    branch: main
+
+  - name: service
+    path: service
+    url: git@github.com:anil-wu/sparkx-service.git
+    branch: feature/login
+```
+
+### 拉取仓库
+
+**Windows (PowerShell):**
+```powershell
+cd scripts
+.\fetch-repos.ps1                    # 克隆/更新所有仓库
+.\fetch-repos.ps1 -RepoName service  # 仅操作 service 仓库
+.\fetch-repos.ps1 -Status            # 查看所有仓库状态
+```
+
+**Linux/Mac (Bash):**
+```bash
+cd scripts
+./fetch-repos.sh                     # 克隆/更新所有仓库
+./fetch-repos.sh -r service          # 仅操作 service 仓库
+./fetch-repos.sh -s                  # 查看所有仓库状态
+```
+
+### 从 Git Submodules 迁移
+
+如果你之前使用 Git Submodules，已经执行了以下清理：
+- 删除了 `.gitmodules` 文件
+- 从 Git 缓存中移除了子模块
+- 提交了变更
+
+现在只需运行上述脚本即可拉取独立仓库。

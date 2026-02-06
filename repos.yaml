@@ -1,0 +1,40 @@
+# 项目仓库配置文件
+# 用于管理独立仓库的拉取和同步
+
+# 版本
+version: "1.0"
+
+# 仓库列表
+repositories:
+  - name: skills
+    path: skills
+    url: https://github.com/anil-wu/skills.git
+    branch: main
+    description: 项目技能模块
+
+  - name: agents
+    path: agents
+    url: https://github.com/anil-wu/metai-game-code-agent.git
+    branch: main
+    description: AI Agent 代码生成模块
+
+  - name: web
+    path: web
+    url: git@github.com:anil-wu/metai-game-front.git
+    branch: main
+    description: 前端 Web 应用
+
+  - name: service
+    path: service
+    url: git@github.com:anil-wu/sparkx-service.git
+    branch: feature/login
+    description: 后端服务 API
+
+# 全局配置
+global:
+  # 默认克隆深度 (1 表示浅克隆，null 表示完整克隆)
+  default_depth: null
+  # 是否在拉取时自动更新子模块
+  update_submodules: false
+  # 克隆时是否使用 --recursive
+  recursive: false
