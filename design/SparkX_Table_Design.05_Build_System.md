@@ -1,28 +1,32 @@
 # 四、构建系统
 
-### 8. build
+### 8. build_manifest
 
 ```sql
-build (
+build_manifest (
     id bigint PK,
-    project_version_id bigint FK -> project_version.id,
-    status enum(pending, running, success, failed),
-    output_file_id bigint FK -> file.id,
+    software_manifest_id bigint FK -> software_manifest.id,
+    status enum(pending, running, success, failed, cancelled),
+    build_output_file_id bigint FK -> file.id,
+    build_log text,
+    build_config text,
+    started_at timestamptz,
+    finished_at timestamptz,
     created_at timestamptz,
-    finished_at timestamptz
+    created_by bigint FK -> user.id
 )
 ```
 
-### 8b. project_release
+### 9. release
 
 ```sql
-project_release (
+release (
     id bigint PK,
-    project_version_id bigint FK -> project_version.id,
-    build_id bigint FK -> build.id,
+    build_manifest_id bigint FK -> build_manifest.id,
+    name varchar,
     channel enum(dev, qa, beta, prod),
-    platform enum(web, android, ios),
-    status enum(pending, published, rolled_back),
+    platform enum(web, android, ios, desktop),
+    status enum(active, rolled_back, archived),
     version_tag varchar,
     release_notes text,
     preview_url varchar,
