@@ -135,6 +135,10 @@ jobs:
           push: true
           build-args: |
             COMMIT_SHA=${{ steps.tag.outputs.image_tag }}
+            OSS_ENDPOINT=${{ secrets.OSS_ENDPOINT }}
+            OSS_ACCESS_KEY_ID=${{ secrets.OSS_ACCESS_KEY_ID }}
+            OSS_ACCESS_KEY_SECRET=${{ secrets.OSS_ACCESS_KEY_SECRET }}
+            OSS_BUCKET=${{ secrets.OSS_BUCKET }}
           tags: |
             ${{ env.ACR_REGISTRY }}/${{ env.ACR_NAMESPACE }}/${{ matrix.image }}:latest
             ${{ env.ACR_REGISTRY }}/${{ env.ACR_NAMESPACE }}/${{ matrix.image }}:${{ steps.tag.outputs.image_tag }}
