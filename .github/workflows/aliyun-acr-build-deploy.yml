@@ -17,6 +17,7 @@ concurrency:
 env:
   ACR_REGISTRY: ${{ secrets.ALIYUN_ACR_REGISTRY }}
   ACR_NAMESPACE: ${{ secrets.ALIYUN_ACR_NAMESPACE }}
+  SPARKX_API_BASE_URL: ${{ secrets.SPARKX_API_BASE_URL }}
 
 jobs:
   build_and_push:
@@ -196,6 +197,7 @@ jobs:
           DEPLOY_DIR: ${{ secrets.ALIYUN_DEPLOY_DIR }}
           ACR_USERNAME: ${{ secrets.ALIYUN_ACR_USERNAME }}
           ACR_PASSWORD: ${{ secrets.ALIYUN_ACR_PASSWORD }}
+          SPARKX_API_BASE_URL: ${{ secrets.SPARKX_API_BASE_URL }}
         run: |
           set -euo pipefail
           if [ -z "${ACR_REGISTRY:-}" ] || [ -z "${ACR_NAMESPACE:-}" ] || [ -z "${ACR_USERNAME:-}" ] || [ -z "${ACR_PASSWORD:-}" ]; then
@@ -235,6 +237,7 @@ jobs:
           export SERVICE_TAG="${SERVICE_TAG}"
           export WEB_TAG="${WEB_TAG}"
           export WEB_ADMIN_TAG="${WEB_ADMIN_TAG}"
+          export SPARKX_API_BASE_URL="${SPARKX_API_BASE_URL}"
 
           DOCKER_CONFIG_DIR="$(mktemp -d)"
           export DOCKER_CONFIG="\${DOCKER_CONFIG_DIR}"
