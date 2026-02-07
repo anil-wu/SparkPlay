@@ -20,13 +20,20 @@ SparkPlay/
 ├── design/                  # 平台设计文档与数据表拆分索引
 ├── deploy/                  # 部署配置（docker-compose）
 ├── scripts/                 # 仓库管理脚本
-├── web/                     # Web 前端（编辑器/工作台）
+├── web_api/                 # 接口文档服务（Swagger UI，Docker 构建入口）
 ├── repos.yaml               # 仓库配置文件（替代 git submodules）
 └── README.md
 ```
 
 > **注意**：本项目使用 `repos.yaml` + 脚本管理依赖仓库，不再使用 Git Submodules。
-> 相关仓库（agents, service, skills）通过 [repos.yaml](repos.yaml) 配置，使用 [scripts/fetch-repos.ps1](scripts/fetch-repos.ps1) 或 [scripts/fetch-repos.sh](scripts/fetch-repos.sh) 拉取。
+> 相关仓库（agents, service, skills, web, web_admin）通过 [repos.yaml](repos.yaml) 配置，使用 [scripts/fetch_repos.py](scripts/fetch_repos.py) 拉取。
+>
+> **子仓库目录**（通过脚本拉取）：
+> - `web/` - 前端 Web 应用（用户端编辑器/工作台）
+> - `service/` - 后端服务 API（Go-zero 框架）
+> - `agents/` - AI Agent 代码生成模块
+> - `skills/` - 项目技能模块
+> - `web_admin/` - 管理后台前端（运营/管理员使用）
 
 项目数据表设计索引：`design/SparkX_Table_Design.md`
 
@@ -40,7 +47,7 @@ SparkPlay/
 工作流要点：
 
 - 不再使用 git submodules，依赖仓库通过 `repos.yaml` 管理
-- 仅对存在 `Dockerfile` 的组件执行构建（当前仅 `web/` 有 `Dockerfile`）
+- 仅对存在 `Dockerfile` 的组件执行构建（当前 `web_api/` 有 `Dockerfile`）
 - 会将 `mysql:8.4` 镜像同步到 ACR，供部署时使用
 
 需要配置的 Secrets（Settings → Secrets and variables → Actions）：
@@ -98,21 +105,36 @@ repositories:
 
 ### 拉取仓库
 
-**Windows (PowerShell):**
-```powershell
-cd scripts
-.\fetch-repos.ps1                    # 克隆/更新所有仓库
-.\fetch-repos.ps1 -RepoName service  # 仅操作 service 仓库
-.\fetch-repos.ps1 -Status            # 查看所有仓库状态
+使用 Python 脚本管理依赖仓库：
+
+```bash
+# 克隆/更新所有仓库
+python scripts/fetch_repos.py
+
+# 查看帮助信息
+python scripts/fetch_repos.py --help
+
+# 仅克隆/更新指定仓库
+python scripts/fetch_repos.py --repo service
+
+# 查看所有仓库状态
+python scripts/fetch_repos.py --status
+
+# 强制重新克隆（会删除已存在的目录）
+python scripts/fetch_repos.py --force
 ```
 
-**Linux/Mac (Bash):**
-```bash
-cd scripts
-./fetch-repos.sh                     # 克隆/更新所有仓库
-./fetch-repos.sh -r service          # 仅操作 service 仓库
-./fetch-repos.sh -s                  # 查看所有仓库状态
-```
+### 依赖仓库说明
+
+根据 [repos.yaml](repos.yaml) 配置，项目包含以下依赖仓库：
+
+| 仓库名 | 路径 | 说明 |
+|--------|------|------|
+| skills | `skills/` | 项目技能模块 |
+| agents | `agents/` | AI Agent 代码生成模块 |
+| web | `web/` | 前端 Web 应用 |
+| service | `service/` | 后端服务 API |
+| web_admin | `web_admin/` | 管理后台前端（运营/管理员使用） |
 
 ### 从 Git Submodules 迁移
 
