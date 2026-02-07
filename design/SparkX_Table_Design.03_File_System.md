@@ -5,7 +5,6 @@
 ```sql
 file (
     id bigint PK,
-    project_id bigint FK -> project.id,
     name varchar,
     file_category enum(text, image, video, audio, binary),
     file_format varchar,
@@ -14,7 +13,20 @@ file (
 )
 ```
 
-### 5. file_version
+### 5. project_file
+
+项目与文件的关联表，支持一个文件属于多个项目。
+
+```sql
+project_file (
+    id bigint PK,
+    project_id bigint FK -> project.id,
+    file_id bigint FK -> file.id,
+    created_at timestamptz
+)
+```
+
+### 6. file_version
 
 ```sql
 file_version (
