@@ -41,6 +41,10 @@ jobs:
             context: .
             image: sparkplay-web-api
             dockerfile: web_api/Dockerfile
+          - component: web-admin
+            context: .
+            image: sparkplay-web-admin
+            dockerfile: web_admin/Dockerfile
     steps:
       - uses: actions/checkout@v4
 
@@ -59,6 +63,7 @@ jobs:
           git clone https://github.com/anil-wu/metai-game-code-agent.git agents
           git clone git@github.com:anil-wu/metai-game-front.git web
           git clone -b feature/login git@github.com:anil-wu/sparkx-service.git service
+          git clone git@github.com:anil-wu/sparkx-admin.git web_admin
 
       - uses: docker/setup-buildx-action@v3
       - name: Normalize ACR registry
@@ -120,6 +125,9 @@ jobs:
           elif [ "${{ matrix.component }}" == "agents" ]; then
             TAG=$(cd agents && git rev-parse HEAD)
             echo "Using agents repo hash: ${TAG}"
+          elif [ "${{ matrix.component }}" == "web-admin" ]; then
+            TAG=$(cd web_admin && git rev-parse HEAD)
+            echo "Using web-admin repo hash: ${TAG}"
           else
             TAG="${{ github.sha }}"
           fi
@@ -167,6 +175,7 @@ jobs:
           git clone https://github.com/anil-wu/metai-game-code-agent.git agents
           git clone git@github.com:anil-wu/metai-game-front.git web
           git clone -b feature/login git@github.com:anil-wu/sparkx-service.git service
+          git clone git@github.com:anil-wu/sparkx-admin.git web_admin
 
       - uses: webfactory/ssh-agent@v0.9.0
         with:
@@ -206,6 +215,7 @@ jobs:
           WEB_API_TAG=$(cd service && git rev-parse HEAD)
           SERVICE_TAG=$(cd service && git rev-parse HEAD)
           WEB_TAG=$(cd web && git rev-parse HEAD)
+          WEB_ADMIN_TAG=$(cd web_admin && git rev-parse HEAD)
 
           REMOTE_DIR="${DEPLOY_DIR:-sparkx}"
           ssh "${DEPLOY_USER}@${DEPLOY_HOST}" "mkdir -p \"${REMOTE_DIR}\""
@@ -224,6 +234,7 @@ jobs:
           export WEB_API_TAG="${WEB_API_TAG}"
           export SERVICE_TAG="${SERVICE_TAG}"
           export WEB_TAG="${WEB_TAG}"
+          export WEB_ADMIN_TAG="${WEB_ADMIN_TAG}"
 
           DOCKER_CONFIG_DIR="$(mktemp -d)"
           export DOCKER_CONFIG="\${DOCKER_CONFIG_DIR}"

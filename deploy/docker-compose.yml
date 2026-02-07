@@ -26,6 +26,14 @@ services:
       - "${WEB_API_PORT:-6002}:8080"
     depends_on:
       - service
+  web-admin:
+    image: ${ACR_REGISTRY}/${ACR_NAMESPACE}/sparkplay-web-admin:${WEB_ADMIN_TAG:-latest}
+    container_name: sparkplay-web-admin
+    restart: unless-stopped
+    ports:
+      - "${WEB_ADMIN_PORT:-6004}:80"
+    depends_on:
+      - service
   mysql:
     image: ${MYSQL_IMAGE:-mysql:8.4}
     command: --bind-address=0.0.0.0
