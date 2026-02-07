@@ -14,7 +14,6 @@ software (
     status enum(active, archived),
     created_at timestamptz,
     updated_at timestamptz,
-    current_software_manifest_id bigint FK -> software_manifest.id,
     created_by bigint FK -> user.id
 )
 ### 7. software_manifest
