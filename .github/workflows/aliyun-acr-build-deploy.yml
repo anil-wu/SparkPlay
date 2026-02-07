@@ -43,7 +43,7 @@ jobs:
             image: sparkplay-web-api
             dockerfile: web_api/Dockerfile
           - component: web-admin
-            context: .
+            context: web_admin
             image: sparkplay-web-admin
             dockerfile: web_admin/Dockerfile
     steps:
