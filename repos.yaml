@@ -30,6 +30,12 @@ repositories:
     branch: feature/login
     description: 后端服务 API
 
+  - name: web_admin
+    path: web_admin
+    url: git@github.com:anil-wu/metai-game-admin.git
+    branch: main
+    description: 管理后台前端
+
 # 全局配置
 global:
   # 默认克隆深度 (1 表示浅克隆，null 表示完整克隆)
