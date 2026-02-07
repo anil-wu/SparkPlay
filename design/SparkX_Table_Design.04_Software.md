@@ -12,6 +12,7 @@ software (
     status enum(active, archived),
     created_at timestamptz,
     updated_at timestamptz,
+    current_software_manifest_id bigint FK -> software_manifest.id,
     created_by bigint FK -> user.id
 )
 ### 7. software_manifest
@@ -23,10 +24,6 @@ software_manifest (
     manifest_file_id bigint FK -> file.id,
     version_number int,
     description text,
-    build_rules text,
-    entry_point varchar,
-    dependencies text,
-    is_current boolean,
     created_at timestamptz,
     created_by bigint FK -> user.id
 )
