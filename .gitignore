@@ -40,3 +40,4 @@ yarn-error.log*
 /service/
 /skills/
 /web/
+/web_admin/
