@@ -76,85 +76,19 @@ jobs:
           SESSION_SECRET: ${{ secrets.SESSION_SECRET }}
         run: |
           set -euo pipefail
-          TEMPLATE="web/.env.example"
-          OUT="web/.env.production"
-          if [ ! -f "${TEMPLATE}" ]; then
-            echo "Missing template: ${TEMPLATE}" >&2
+          OUT="web/.env"
+          if [ -z "${SESSION_SECRET:-}" ]; then
+            echo "Missing required secret: SESSION_SECRET" >&2
             exit 1
           fi
-
-          awk \
-            -v api="${SPARKX_API_BASE_URL:-}" \
-            -v google="${GOOGLE_CLIENT_ID:-}" \
-            -v maxage="${SESSION_MAX_AGE:-}" \
-            -v secret="${SESSION_SECRET:-}" \
-            '
-            function emit(key, value, original) {
-              if (value != "") {
-                print key "=" value;
-                seen[key] = 1;
-              } else {
-                print original;
-                seen[key] = 1;
-              }
-            }
-
-            BEGIN { FS = "=" }
-
-            /^[A-Za-z_][A-Za-z0-9_]*=/ {
-              key = $1
-              original = $0
-              if (key == "SPARKX_API_BASE_URL") { emit(key, api, original); next }
-              if (key == "GOOGLE_CLIENT_ID") { emit(key, google, original); next }
-              if (key == "SESSION_MAX_AGE") { emit(key, maxage, original); next }
-              if (key == "SESSION_SECRET") { emit(key, secret, original); next }
-            }
-
-            { print $0 }
-
-            END {
-              if (!seen["SESSION_SECRET"] && secret != "") {
-                print "SESSION_SECRET=" secret;
-              }
-            }
-            ' "${TEMPLATE}" > "${OUT}"
-
-      - name: Ensure web image ships env file
-        if: matrix.component == 'web'
-        shell: bash
-        run: |
-          set -euo pipefail
-          python3 - <<'PY'
-          from __future__ import annotations
-
-          from pathlib import Path
-
-          dockerfile = Path("web/Dockerfile")
-          content = dockerfile.read_text(encoding="utf-8")
-          if ".env.production" in content:
-            raise SystemExit(0)
-
-          lines = content.splitlines(keepends=True)
-          insert_line = 'COPY --from=builder --chown=nextjs:bunjs /app/.env.production ./.env.production\n'
-
-          anchor_indices = [
-            i
-            for i, line in enumerate(lines)
-            if "COPY --from=builder" in line and "/app/.next/static" in line
-          ]
-
-          if anchor_indices:
-            insert_at = anchor_indices[0] + 1
-            lines.insert(insert_at, insert_line)
-          else:
-            user_indices = [i for i, line in enumerate(lines) if line.strip() == "USER nextjs"]
-            if not user_indices:
-              raise RuntimeError("Unable to locate insertion point in web/Dockerfile")
-            insert_at = user_indices[0]
-            lines.insert(insert_at, insert_line)
-
-          dockerfile.write_text("".join(lines), encoding="utf-8")
-          PY
+          {
+            echo "SPARKX_API_BASE_URL=${SPARKX_API_BASE_URL}"
+            if [ -n "${GOOGLE_CLIENT_ID:-}" ]; then
+              echo "GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}"
+            fi
+            echo "SESSION_SECRET=${SESSION_SECRET}"
+            echo "SESSION_MAX_AGE=${SESSION_MAX_AGE:-2592000}"
+          } > "${OUT}"
 
       - uses: docker/setup-buildx-action@v3
       - name: Normalize ACR registry
