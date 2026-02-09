@@ -20,6 +20,20 @@ services:
       - SPARKX_API_BASE_URL=http://service:6001
     depends_on:
       - service
+  web-https:
+    image: nginx:1.27-alpine
+    container_name: sparkplay-web-https
+    restart: unless-stopped
+    ports:
+      - "${WEB_HTTPS_PORT:-443}:443"
+    volumes:
+      - ./nginx/templates:/etc/nginx/templates:ro
+      - ./certs:/etc/nginx/certs:ro
+    environment:
+      - NGINX_ENVSUBST_TEMPLATE_SUFFIX=.template
+      - WEB_SERVER_NAME=${WEB_SERVER_NAME:-_}
+    depends_on:
+      - web
   web-api:
     image: ${ACR_REGISTRY}/${ACR_NAMESPACE}/sparkplay-web-api:${WEB_API_TAG:-latest}
     container_name: sparkplay-web-api
