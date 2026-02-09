@@ -25,6 +25,8 @@ software_manifest (
     project_id bigint FK -> project.id,
     software_id bigint FK -> software.id,
     manifest_file_id bigint FK -> file.id,
+    manifest_file_version_id bigint FK -> file_version.id,
+    version_description text,
     created_at timestamptz,
     created_by bigint FK -> user.id
 )
