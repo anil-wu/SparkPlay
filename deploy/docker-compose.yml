@@ -14,6 +14,8 @@ services:
     image: ${ACR_REGISTRY}/${ACR_NAMESPACE}/sparkplay-web:${WEB_TAG:-latest}
     container_name: sparkplay-web
     restart: unless-stopped
+    environment:
+      - NODE_TLS_REJECT_UNAUTHORIZED=0
     volumes:
       - ./certs:/etc/nginx/certs:ro
     ports:
