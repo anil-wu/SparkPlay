@@ -270,9 +270,11 @@ jobs:
           if docker compose version >/dev/null 2>&1; then
             docker compose pull
             docker compose up -d --remove-orphans
+            docker compose restart
           elif command -v docker-compose >/dev/null 2>&1; then
             docker-compose pull
             docker-compose up -d --remove-orphans
+            docker-compose restart
           else
             echo "Neither docker compose nor docker-compose is available on remote host" >&2
             exit 1
