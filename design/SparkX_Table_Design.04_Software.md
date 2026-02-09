@@ -8,7 +8,6 @@ software (
     project_id bigint FK -> project.id,
     name varchar,
     description text,
-    manifest_id bigint FK -> software_manifest.id,
     template_id bigint FK -> software_template.id,
     technology_stack varchar,
     status enum(active, archived),
@@ -23,10 +22,9 @@ software (
 ```sql
 software_manifest (
     id bigint PK,
+    project_id bigint FK -> project.id,
     software_id bigint FK -> software.id,
     manifest_file_id bigint FK -> file.id,
-    version_number int,
-    description text,
     created_at timestamptz,
     created_by bigint FK -> user.id
 )
