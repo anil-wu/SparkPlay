@@ -4,7 +4,7 @@ services:
     container_name: sparkplay-service
     restart: unless-stopped
     ports:
-      - "${SERVICE_PORT:-6001}:8890"
+      - "${SERVICE_PORT:-6001}:6001"
     environment:
       - MYSQL_DSN=sparkplay:sparkplay@tcp(mysql)/sparkplay?charset=utf8mb4&parseTime=true&loc=Local
     depends_on:
@@ -16,6 +16,8 @@ services:
     restart: unless-stopped
     ports:
       - "${WEB_PORT:-80}:3000"
+    environment:
+      - SPARKX_API_BASE_URL=http://service:6001
     depends_on:
       - service
   web-api:
