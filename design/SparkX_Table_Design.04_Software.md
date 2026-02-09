@@ -1,6 +1,6 @@
 # 三、软件工程 & Manifest
 
-### 6. software
+### 7. software
 
 ```sql
 software (
@@ -16,7 +16,9 @@ software (
     updated_at timestamptz,
     created_by bigint FK -> user.id
 )
-### 7. software_manifest
+```
+
+### 8. software_manifest
 
 ```sql
 software_manifest (
@@ -30,7 +32,7 @@ software_manifest (
 )
 ```
 
-### 8. software_template
+### 9. software_template
 
 ```sql
 software_template (

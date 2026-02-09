@@ -1,6 +1,6 @@
 # 四、构建系统
 
-### 8. build_manifest
+### 10. build_manifest
 
 ```sql
 build_manifest (
@@ -15,7 +15,7 @@ build_manifest (
 )
 ```
 
-### 9. release
+### 11. release
 
 ```sql
 release (

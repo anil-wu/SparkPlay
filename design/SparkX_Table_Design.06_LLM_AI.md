@@ -1,6 +1,6 @@
 # 五、LLM / AI 相关
 
-### 9. llm_provider
+### 12. llm_provider
 
 ```sql
 llm_provider (
@@ -13,7 +13,7 @@ llm_provider (
 )
 ```
 
-### 10. llm_model
+### 13. llm_model
 
 ```sql
 llm_model (
@@ -31,7 +31,7 @@ llm_model (
 )
 ```
 
-### 11. llm_usage_log
+### 14. llm_usage_log
 
 ```sql
 llm_usage_log (

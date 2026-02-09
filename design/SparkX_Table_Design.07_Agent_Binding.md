@@ -1,6 +1,6 @@
 # 六、Agent 与模型映射
 
-### 12. agent
+### 15. agent
 
 ```sql
 agent (
@@ -12,7 +12,7 @@ agent (
 )
 ```
 
-### 13. agent_llm_binding
+### 16. agent_llm_binding
 
 ```sql
 agent_llm_binding (
