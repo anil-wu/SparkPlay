@@ -41,3 +41,18 @@ project_member (
 )
 ```
 
+### 管理后台
+
+```sql
+admins (
+    id bigint PK,
+    username varchar UNIQUE,
+    password_hash char(32),
+    role enum(super_admin, admin),
+    status enum(active, disabled),
+    last_login_at timestamptz,
+    created_at timestamptz,
+    updated_at timestamptz
+)
+```
+
