@@ -1,58 +1,85 @@
 # 一、用户与项目
 
-### 1. user
+### 1. users
 
 ```sql
-user (
-    id bigint PK,
-    username varchar UNIQUE,
-    email varchar UNIQUE,
-    password_hash varchar,
-    status enum(active, disabled),
-    created_at timestamptz,
-    updated_at timestamptz
-)
+CREATE TABLE IF NOT EXISTS `users` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `username` VARCHAR(64) NOT NULL DEFAULT '',
+  `email` VARCHAR(128) NOT NULL UNIQUE,
+  `password_hash` CHAR(32) NOT NULL,
+  `avatar` VARCHAR(255) NOT NULL DEFAULT '',
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_users_email` (`email`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 ```
 
-### 2. project
+### 2. user_identities
 
 ```sql
-project (
-    id bigint PK,
-    name varchar,
-    description text,
-    cover_image_file_id bigint FK -> file.id,
-    owner_id bigint FK -> user.id,
-    status enum(active, archived),
-    created_at timestamptz,
-    updated_at timestamptz
-)
+CREATE TABLE IF NOT EXISTS `user_identities` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `user_id` BIGINT UNSIGNED NOT NULL,
+  `provider` VARCHAR(32) NOT NULL,
+  `provider_uid` VARCHAR(255) NOT NULL,
+  `email` VARCHAR(128) NOT NULL,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_provider_uid` (`provider`, `provider_uid`),
+  KEY `idx_user_id` (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 ```
 
-### 3. project_member
+### 3. projects
 
 ```sql
-project_member (
-    id bigint PK,
-    project_id bigint FK -> project.id,
-    user_id bigint FK -> user.id,
-    role enum(owner, admin, developer, viewer),
-    created_at timestamptz
-)
+CREATE TABLE IF NOT EXISTS `projects` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `name` VARCHAR(128) NOT NULL,
+  `description` TEXT,
+  `cover_file_id` BIGINT NOT NULL DEFAULT 0,
+  `owner_id` BIGINT UNSIGNED NOT NULL,
+  `status` ENUM('active','archived') NOT NULL DEFAULT 'active',
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_projects_owner_id` (`owner_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+```
+
+### 4. project_members
+
+```sql
+CREATE TABLE IF NOT EXISTS `project_members` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `project_id` BIGINT UNSIGNED NOT NULL,
+  `user_id` BIGINT UNSIGNED NOT NULL,
+  `role` ENUM('owner','admin','developer','viewer') NOT NULL,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_project_user` (`project_id`,`user_id`),
+  KEY `idx_project_members_user_id` (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 ```
 
 ### 管理后台
 
 ```sql
-admins (
-    id bigint PK,
-    username varchar UNIQUE,
-    password_hash char(32),
-    role enum(super_admin, admin),
-    status enum(active, disabled),
-    last_login_at timestamptz,
-    created_at timestamptz,
-    updated_at timestamptz
-)
+CREATE TABLE IF NOT EXISTS `admins` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `username` VARCHAR(64) NOT NULL UNIQUE,
+  `password_hash` CHAR(32) NOT NULL,
+  `role` ENUM('super_admin','admin') NOT NULL DEFAULT 'admin',
+  `status` ENUM('active','disabled') NOT NULL DEFAULT 'active',
+  `last_login_at` TIMESTAMP NULL DEFAULT NULL,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_admins_username` (`username`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 ```
 
