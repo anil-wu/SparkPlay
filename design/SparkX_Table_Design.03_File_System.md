@@ -6,6 +6,7 @@
 file (
     id bigint PK,
     name varchar,
+    file_scope enum('project', 'system_template', 'asset_library', 'shared') DEFAULT 'project',
     file_category enum(text, image, video, audio, binary),
     file_format varchar,
     current_version_id bigint FK -> file_version.id,
