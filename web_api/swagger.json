@@ -2865,6 +2865,148 @@
         }
       }
     },
+    "/api/v1/agents/configs": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "summary": "ListAgentConfigs",
+        "operationId": "agentsListAgentConfigs",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "code | asset | design | test | build | ops | project",
+            "name": "agentType",
+            "in": "query",
+            "allowEmptyValue": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "agentinfos": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "agent",
+                      "bindings"
+                    ],
+                    "properties": {
+                      "agent": {
+                        "type": "object",
+                        "required": [
+                          "id",
+                          "name",
+                          "description",
+                          "instruction",
+                          "agentType",
+                          "createdAt"
+                        ],
+                        "properties": {
+                          "agentType": {
+                            "type": "string"
+                          },
+                          "createdAt": {
+                            "type": "string"
+                          },
+                          "description": {
+                            "type": "string"
+                          },
+                          "id": {
+                            "type": "integer"
+                          },
+                          "instruction": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          }
+                        }
+                      },
+                      "bindings": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "required": [
+                            "id",
+                            "priority",
+                            "isActive",
+                            "modelIndex"
+                          ],
+                          "properties": {
+                            "id": {
+                              "type": "integer"
+                            },
+                            "isActive": {
+                              "type": "boolean"
+                            },
+                            "modelIndex": {
+                              "type": "integer"
+                            },
+                            "priority": {
+                              "type": "integer"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "models": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "llmModelId",
+                      "providerId",
+                      "providerName",
+                      "providerBaseUrl",
+                      "providerApiKey",
+                      "providerHasApiKey",
+                      "modelName",
+                      "modelType"
+                    ],
+                    "properties": {
+                      "llmModelId": {
+                        "type": "integer"
+                      },
+                      "modelName": {
+                        "type": "string"
+                      },
+                      "modelType": {
+                        "type": "string"
+                      },
+                      "providerApiKey": {
+                        "type": "string"
+                      },
+                      "providerBaseUrl": {
+                        "type": "string"
+                      },
+                      "providerHasApiKey": {
+                        "type": "boolean"
+                      },
+                      "providerId": {
+                        "type": "integer"
+                      },
+                      "providerName": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/agents/{id}": {
       "get": {
         "produces": [
@@ -4520,7 +4662,7 @@
       }
     }
   },
-  "x-date": "2026-02-11 13:58:17",
+  "x-date": "2026-02-11 23:48:32",
   "x-description": "This is a goctl generated swagger file.",
   "x-github": "https://github.com/zeromicro/go-zero",
   "x-go-zero-doc": "https://go-zero.dev/",
