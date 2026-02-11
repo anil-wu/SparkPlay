@@ -388,7 +388,7 @@
         "parameters": [
           {
             "type": "string",
-            "description": "code | asset | design | test | build | ops",
+            "description": "code | asset | design | test | build | ops | project",
             "name": "agentType",
             "in": "query",
             "allowEmptyValue": true
@@ -422,6 +422,7 @@
                       "id",
                       "name",
                       "description",
+                      "instruction",
                       "agentType",
                       "createdAt"
                     ],
@@ -437,6 +438,9 @@
                       },
                       "id": {
                         "type": "integer"
+                      },
+                      "instruction": {
+                        "type": "string"
                       },
                       "name": {
                         "type": "string"
@@ -493,10 +497,13 @@
               ],
               "properties": {
                 "agentType": {
-                  "description": "code | asset | design | test | build | ops",
+                  "description": "code | asset | design | test | build | ops | project",
                   "type": "string"
                 },
                 "description": {
+                  "type": "string"
+                },
+                "instruction": {
                   "type": "string"
                 },
                 "name": {
@@ -523,6 +530,9 @@
                 },
                 "id": {
                   "type": "integer"
+                },
+                "instruction": {
+                  "type": "string"
                 },
                 "name": {
                   "type": "string"
@@ -569,6 +579,9 @@
                 "id": {
                   "type": "integer"
                 },
+                "instruction": {
+                  "type": "string"
+                },
                 "name": {
                   "type": "string"
                 }
@@ -604,10 +617,13 @@
               "type": "object",
               "properties": {
                 "agentType": {
-                  "description": "code | asset | design | test | build | ops",
+                  "description": "code | asset | design | test | build | ops | project",
                   "type": "string"
                 },
                 "description": {
+                  "type": "string"
+                },
+                "instruction": {
                   "type": "string"
                 },
                 "name": {
@@ -710,6 +726,7 @@
                       "providerId",
                       "providerName",
                       "providerBaseUrl",
+                      "providerApiKey",
                       "providerHasApiKey",
                       "modelName",
                       "modelType"
@@ -738,6 +755,9 @@
                       },
                       "priority": {
                         "type": "integer"
+                      },
+                      "providerApiKey": {
+                        "type": "string"
                       },
                       "providerBaseUrl": {
                         "type": "string"
@@ -830,6 +850,9 @@
                 },
                 "priority": {
                   "type": "integer"
+                },
+                "providerApiKey": {
+                  "type": "string"
                 },
                 "providerBaseUrl": {
                   "type": "string"
@@ -2634,7 +2657,7 @@
         "parameters": [
           {
             "type": "string",
-            "description": "code | asset | design | test | build | ops",
+            "description": "code | asset | design | test | build | ops | project",
             "name": "agentType",
             "in": "query",
             "allowEmptyValue": true
@@ -2668,6 +2691,7 @@
                       "id",
                       "name",
                       "description",
+                      "instruction",
                       "agentType",
                       "createdAt"
                     ],
@@ -2683,6 +2707,9 @@
                       },
                       "id": {
                         "type": "integer"
+                      },
+                      "instruction": {
+                        "type": "string"
                       },
                       "name": {
                         "type": "string"
@@ -2745,6 +2772,7 @@
                     "id",
                     "name",
                     "description",
+                    "instruction",
                     "agentType",
                     "createdAt"
                   ],
@@ -2760,6 +2788,9 @@
                     },
                     "id": {
                       "type": "integer"
+                    },
+                    "instruction": {
+                      "type": "string"
                     },
                     "name": {
                       "type": "string"
@@ -2780,6 +2811,7 @@
                       "providerId",
                       "providerName",
                       "providerBaseUrl",
+                      "providerApiKey",
                       "providerHasApiKey",
                       "modelName",
                       "modelType"
@@ -2808,6 +2840,9 @@
                       },
                       "priority": {
                         "type": "integer"
+                      },
+                      "providerApiKey": {
+                        "type": "string"
                       },
                       "providerBaseUrl": {
                         "type": "string"
@@ -2866,6 +2901,9 @@
                 "id": {
                   "type": "integer"
                 },
+                "instruction": {
+                  "type": "string"
+                },
                 "name": {
                   "type": "string"
                 }
@@ -2913,6 +2951,7 @@
                       "providerId",
                       "providerName",
                       "providerBaseUrl",
+                      "providerApiKey",
                       "providerHasApiKey",
                       "modelName",
                       "modelType"
@@ -2941,6 +2980,9 @@
                       },
                       "priority": {
                         "type": "integer"
+                      },
+                      "providerApiKey": {
+                        "type": "string"
                       },
                       "providerBaseUrl": {
                         "type": "string"
@@ -4478,7 +4520,7 @@
       }
     }
   },
-  "x-date": "2026-02-10 18:02:36",
+  "x-date": "2026-02-11 13:58:17",
   "x-description": "This is a goctl generated swagger file.",
   "x-github": "https://github.com/zeromicro/go-zero",
   "x-go-zero-doc": "https://go-zero.dev/",
