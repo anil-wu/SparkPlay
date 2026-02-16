@@ -15,7 +15,8 @@ Agent 系统基于 `google.adk.agents.llm_agent` 框架构建，使用 `LiteLLM`
   - `work_space_manager_agent`（条件性加载，基于配置）
   - `verifier_agent`
   - `coder_agent`
-  - *（已注释/保留：`spec_agent`、`planner_agent`、`debugger_agent`）*
+  - `debugger_agent`
+  - *（已注释/保留：`spec_agent`、`planner_agent`）*
 - **配置**：
   - 动态加载模型配置 (`_litellm_from_agent_config`) 和提示词模板 (`_prompt_value`)。
   - 支持针对特定模型提供商（如 DeepSeek）的应用补丁。
@@ -49,6 +50,29 @@ Agent 系统基于 `google.adk.agents.llm_agent` 框架构建，使用 `LiteLLM`
   - **命令执行**：
     - `run_cmd`：执行 Shell 命令（目前通过 `run_npm` 限制为安全列表中的 NPM 命令）。
 
+### 2.4. 调试 Agent：`debugger_agent`
+- **定义位置**：`agents/debugger_agent.py`
+- **角色**：专注于诊断和修复运行时错误。它负责分析代码、运行测试、查找错误源头并应用修复补丁。
+- **工具**：
+  - **文件系统操作**：
+    - `read_file`：读取文件内容。
+    - `write_file`：向文件写入内容。
+    - `edit_file`：修改文件内容。
+    - `list_files`：列出目录中的文件。
+    - `search`：在文件中搜索文本（关键调试工具）。
+  - **命令执行**：
+    - `run_cmd`：执行 Shell 命令（`run_npm`），用于运行测试或启动开发服务器以复现问题。
+
+### 2.5. 验证 Agent：`verifier_agent`
+- **定义位置**：`agents/verifier_agent.py`
+- **角色**：负责代码质量检查和功能验证。它执行测试套件、Lint 检查，并审查代码以确保符合项目标准。
+- **工具**：
+  - **文件系统操作**：
+    - `read_file`：读取文件内容以审查代码或配置。
+    - `list_files`：列出目录以查找测试文件或配置文件。
+  - **命令执行**：
+    - `run_cmd`：执行 Shell 命令（`run_npm`），用于运行测试 (`run test`) 或 Lint (`run lint`)。
+
 ## 3. 工具实现细节
 
 工具在 `tools/` 目录下进行了模块化。
@@ -78,6 +102,8 @@ Agent 系统基于 `google.adk.agents.llm_agent` 框架构建，使用 `LiteLLM`
 - **`agents/`**：
   - `work_space_manager_agent.py`：工作区任务的 Agent 定义。
   - `coder_agent.py`：编码任务的 Agent 定义。
+  - `verifier_agent.py`：验证任务的 Agent 定义。
+  - `debugger_agent.py`：调试任务的 Agent 定义。
 - **`tools/`**：
   - `work_space_manager.py`：工作区工具的实现。
   - `filesystem.py`：文件 I/O 工具的实现。
