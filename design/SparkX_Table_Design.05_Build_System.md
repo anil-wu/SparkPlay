@@ -7,6 +7,7 @@ build_version (
     id bigint PK,
     project_id bigint FK -> project.id,
     software_manifest_id bigint FK -> software_manifest.id,
+    version_number int,                  -- 构建版本号，同一软件工程下递增
     description text,
     build_version_file_id bigint FK -> file.id,
     build_version_file_version_id bigint FK -> file_version.id,
@@ -14,6 +15,12 @@ build_version (
     created_by bigint FK -> user.id
 )
 ```
+
+**索引：**
+- `idx_build_versions_project_id` (project_id)
+- `idx_build_versions_software_manifest_id` (software_manifest_id)
+- `idx_build_versions_version_number` (version_number)
+- `idx_build_versions_created_at` (created_at)
 
 ### 11. release
 
