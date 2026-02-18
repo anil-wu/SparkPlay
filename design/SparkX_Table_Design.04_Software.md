@@ -26,6 +26,7 @@ software_manifest (
     software_id bigint FK -> software.id,
     manifest_file_id bigint FK -> file.id,
     manifest_file_version_id bigint FK -> file_version.id,
+    version_number int,                  -- 构建版本号，同一软件工程下递增
     version_description text,
     created_at timestamptz,
     created_by bigint FK -> user.id
