@@ -18,9 +18,10 @@
 | 1 | `get_project_info` | 获取项目信息及软件工程列表 |
 | 2 | `create_project` | 创建新项目并初始化工作空间 |
 | 3 | `get_local_project_info` | 获得本地项目工程信息 |
-| 4 | `init_project_workspace` | 初始化项目工程 |
-| 5 | `pull_project` | 拉取项目工程 |
-| 6 | `push_project` | 推送项目工程 |
+| 4 | `create_workspace` | 创建本地工作空间目录 |
+| 5 | `create_software` | 创建软件工程 |
+| 6 | `pull_project` | 拉取项目工程 |
+| 7 | `push_project` | 推送项目工程 |
 
 ## 三、工具详细设计
 
@@ -210,9 +211,64 @@
 
 ---
 
-### 3.4 `init_project_workspace` - 初始化项目工程
+### 3.4 `create_workspace` - 创建本地工作空间
 
-**功能**: 使用模板初始化软件工程目录
+**功能**: 在本地创建工作空间目录结构，不依赖远程 API
+
+**参数**:
+
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| `workspace_name` | string | 否 | 工作空间名称（默认使用 project_id 或自动生成） |
+
+**执行流程**:
+```
+1. 检查 state 中的 user_id（必需）
+2. 确定工作空间名称：
+   - 优先使用 project_id（如果存在）
+   - 其次使用 workspace_name 参数
+   - 否则自动生成 ws_{timestamp}
+3. 创建目录结构：
+   {workspace_root}/{user_id}/{workspace_name}/
+   ├── game_project/
+   ├── artifacts/
+   ├── build/
+   └── logs/
+4. 验证目录可写
+5. 更新 state 中的路径信息
+```
+
+**返回数据结构**:
+```json
+{
+  "status": "success",
+  "status_code": 200,
+  "message": "工作空间创建成功",
+  "data": {
+    "workspace_dir": "workspaces/1001/124",
+    "workspace_game_dir": "workspaces/1001/124/game_project",
+    "workspace_artifacts_dir": "workspaces/1001/124/artifacts",
+    "workspace_build_dir": "workspaces/1001/124/build",
+    "workspace_logs_dir": "workspaces/1001/124/logs",
+    "existed": false
+  }
+}
+```
+
+**错误情况**:
+
+| 场景 | status_code | message |
+|------|-------------|---------|
+| user_id 未设置 | 400 | "user_id is required" |
+| user_id 无效 | 400 | "user_id is invalid" |
+| 路径越界 | 400 | "workspace_dir escapes WORKSPACE_ROOT" |
+| 目录创建失败 | 500 | 错误详情 |
+
+---
+
+### 3.5 `create_software` - 创建软件工程
+
+**功能**: 使用模板创建软件工程目录
 
 **参数**:
 
@@ -264,7 +320,7 @@
 
 ---
 
-### 3.5 `pull_project` - 拉取项目工程
+### 3.6 `pull_project` - 拉取项目工程
 
 **功能**: 从后端拉取最新版本的工程文件
 
@@ -325,7 +381,7 @@
 
 ---
 
-### 3.6 `push_project` - 推送项目工程
+### 3.7 `push_project` - 推送项目工程
 
 **功能**: 将本地变更推送到后端，创建新版本
 
@@ -387,44 +443,94 @@
 
 ## 四、Agent Instruction
 
-```
-你是一个项目管理专家，负责管理项目的完整生命周期。
+**Agent 描述**: 项目生命周期管理专家，负责项目创建、工作空间初始化、软件工程设置和版本同步（拉取/推送）。
 
-## 核心职责
-1. 项目创建与信息管理
-2. 本地工作空间维护
-3. 工程版本同步（拉取/推送）
+**指令**:
+
+```
+你是项目管理专家（Project Manager Agent）。
+
+## 状态依赖
+- token: 认证令牌（API 调用必需）
+- user_id: 用户标识（工作空间创建必需）
+- project_id: 项目标识（可选，项目创建后设置）
+- api_base_url: API 基础地址（必需）
+- workspace_dir: 工作空间根目录（由 create_workspace/create_project 设置）
+- workspace_game_dir: 游戏项目目录（由 create_workspace/create_project 设置）
 
 ## 前置检查
+执行任何操作前，验证状态依赖：
+1. 如果 user_id 缺失：返回错误 "user_id is required"
+2. 如果 api_base_url 缺失：返回错误 "api_base_url is required"
+3. 如果 token 缺失：部分操作可能失败（API 调用需要认证）
 
-在执行任何操作前，首先检查 state 中的 project_id：
-- 如果 project_id 存在且有效：当前已有项目，可执行查看、同步等操作
-- 如果 project_id 不存在或为空：当前无项目，需要先创建项目
+## 业务场景流程
 
-## 工作流程
+### 场景一：新用户完整创建
+用户无项目且无本地工作空间。
+1. 调用 create_project(project_name, description) 创建远程项目记录
+   - 同时自动创建本地工作空间
+   - 状态更新：project_id, workspace_dir, workspace_game_dir 等
+2. 调用 create_software(software_name, template_name) 初始化软件工程
+   - 从远程下载模板并解压到 workspace_game_dir/software_name
+   - 状态更新：software_name, software_game_dir
 
-### 场景一：当前无项目（project_id 为空）
-1. 调用 create_project 创建项目记录和工作空间
-2. 调用 init_project_workspace 初始化软件工程
+### 场景二：纯本地开发模式
+用户希望仅本地开发，无需远程项目。
+1. 调用 create_workspace(workspace_name) 仅创建本地工作空间
+   - 无远程 API 调用，纯本地目录创建
+   - 状态更新：workspace_dir, workspace_game_dir 等
+2. 调用 create_software(software_name, template_name) 创建软件工程
+   - 需要 workspace_game_dir 已设置
 
-### 场景二：当前已有项目（project_id 存在）
+### 场景三：查看项目状态
+用户已有 project_id，希望查看项目信息。
+1. 调用 get_project_info() 获取远程项目信息和软件工程列表
+   - 返回：项目详情、软件工程列表、软件数量
+2. 调用 get_local_project_info() 检查本地工作空间状态
+   - 返回：工作空间是否存在、本地软件工程、清单信息
 
-#### 查看项目状态
-1. 调用 get_project_info 获取远程项目信息和软件工程列表
-2. 调用 get_local_project_info 获取本地工程状态
+### 场景四：拉取远程变更
+用户希望同步远程变更到本地。
+前置条件：project_id 必须存在，workspace_game_dir 必须已设置。
+1. 调用 get_project_info() 验证项目并获取软件工程列表
+2. 调用 pull_project(software_name, version_number) 下载最新版本
+   - 如果 workspace_game_dir 缺失：返回错误 "请先创建工作空间"
+   - 下载清单和文件变更从远程
 
-#### 同步工程
-- 拉取：调用 pull_project 下载最新版本
-- 推送：调用 push_project 上传本地变更
+### 场景五：推送本地变更
+用户希望上传本地变更到远程。
+前置条件：project_id 必须存在，本地软件工程必须存在。
+1. 调用 get_local_project_info() 检查本地变更
+2. 调用 push_project(software_name, version_description) 上传变更
+   - 扫描本地文件，计算哈希值
+   - 上传变更文件到远程
+   - 创建新版本记录
 
-#### 初始化新工程
-- 调用 init_project_workspace 在现有项目下创建新的软件工程
+### 场景六：在现有项目中创建新软件工程
+用户已有项目，希望添加另一个软件工程。
+1. 调用 get_project_info() 验证项目存在
+2. 调用 create_software(software_name, template_name) 创建新软件工程
+   - 在 workspace_game_dir 下创建目录
+   - 下载并解压模板
 
-## 注意事项
-- 创建项目前必须确认 project_id 为空，避免重复创建
-- 推送前确保本地有实际变更
-- 拉取前检查本地是否有未提交的变更，避免覆盖
-- 始终保持 state 中的 project_id 和 workspace_dir 同步
+## 工具参考
+- get_project_info: 获取远程项目信息和软件工程列表（需要 project_id）
+- create_project: 创建远程项目 + 本地工作空间（需要 project_name）
+- get_local_project_info: 扫描本地工作空间的软件工程（需要 workspace_dir）
+- create_workspace: 仅创建本地工作空间，无远程 API（需要 user_id）
+- create_software: 从模板初始化软件工程（需要 workspace_game_dir, project_id）
+- pull_project: 拉取远程版本到本地（需要 project_id, workspace_game_dir）
+- push_project: 推送本地变更到远程（需要 project_id, 本地软件工程存在）
+
+## 错误处理
+- 调用 create_software/pull_project 时 workspace_game_dir 缺失：建议先调用 create_workspace
+- 调用 get_project_info/pull_project/push_project 时 project_id 缺失：建议先调用 create_project
+- 调用 push_project 时本地软件工程不存在：建议先调用 create_software
+
+重要提示：使用工具时，确保 JSON 参数不要包装在列表中。
+正确格式：{"project_name": "...", ...}
+错误格式：[{"project_name": "...", ...}]
 ```
 
 ## 五、架构整合
@@ -435,7 +541,8 @@ phaser_agent (根 Agent)
 │   ├── get_project_info
 │   ├── create_project
 │   ├── get_local_project_info
-│   ├── init_project_workspace
+│   ├── create_workspace
+│   ├── create_software
 │   ├── pull_project
 │   └── push_project
 ├── coder_agent
@@ -454,11 +561,11 @@ phaser_agent (根 Agent)
 | `user_id` | 服务启动注入 | 用户 ID |
 | `project_id` | 服务启动注入 / create_project 写入 | 项目 ID |
 | `api_base_url` | 服务启动注入 | API 基础 URL |
-| `workspace_dir` | create_project 写入 | 工作空间根目录 |
-| `workspace_game_dir` | create_project 写入 | 游戏工程目录 |
-| `workspace_artifacts_dir` | create_project 写入 | 资产目录 |
-| `workspace_build_dir` | create_project 写入 | 构建输出目录 |
-| `workspace_logs_dir` | create_project 写入 | 日志目录 |
+| `workspace_dir` | create_project / create_workspace 写入 | 工作空间根目录 |
+| `workspace_game_dir` | create_project / create_workspace 写入 | 游戏工程目录 |
+| `workspace_artifacts_dir` | create_project / create_workspace 写入 | 资产目录 |
+| `workspace_build_dir` | create_project / create_workspace 写入 | 构建输出目录 |
+| `workspace_logs_dir` | create_project / create_workspace 写入 | 日志目录 |
 
 ## 七、实现计划
 
