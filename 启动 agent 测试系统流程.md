@@ -40,7 +40,7 @@ cd agents
 # .\.venv\Scripts\Activate.ps1
 
 cd web
-python -m http.server 8002 --bind 127.0.0.1
+'npm run dev'
 ```
 
 - 访问地址：http://127.0.0.1:8002/
