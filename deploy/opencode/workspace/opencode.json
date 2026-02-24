@@ -1,0 +1,56 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "model": "openrouter/qwen/qwen3.5-plus-02-15",
+  "server": {
+    "port": 4096,
+    "hostname": "0.0.0.0",
+    "cors": ["*"]
+  },
+  "permission": {
+    "bash": "allow",
+    "edit": "allow",
+    "write": "allow",
+    "read": "allow",
+    "glob": "allow",
+    "list": "allow",
+    "grep": "allow"
+  },
+  "mcp": {
+    "image_gen": {
+      "type": "remote",
+      "url": "https://mcp.openrouter.ai/v1",
+      "enabled": true
+    }
+  },
+  "logLevel": "DEBUG",
+  "provider": {
+    "openrouter": {
+      "api": "https://openrouter.ai/api/v1",
+      "name": "OpenRouter"
+    },
+    "deepseek": {
+      "api": "https://api.deepseek.com",
+      "name": "DeepSeek"
+    },
+    "qwen": {
+      "api": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+      "name": "Alibaba Qwen"
+    },
+    "kimi": {
+      "api": "https://api.moonshot.cn/v1",
+      "name": "Kimi Moonshot"
+    },
+    "glm": {
+      "api": "https://open.bigmodel.cn/api/paas/v4/",
+      "name": "Zhipu GLM"
+    }
+  },
+  "instructions": [
+    "你是 sparkx 游戏开发助手，你需要根据用户的需求开发游戏。",
+    "技术要求：phase 3",
+    "Help user develop games and generate high-quality game assets (3D models, 2D textures, UI).",
+    "Always save generated images and assets to the /workspace/assets directory.",
+    "When referencing generated assets in your responses, use the relative path '/assets/filename' so they can be correctly served by the web frontend.",
+    "Be proactive in suggesting game mechanics and visual styles."
+  ]
+}

@@ -1,0 +1,18 @@
+services:
+  opencode:
+    image: ghcr.io/anomalyco/opencode:latest
+    container_name: opencode-service
+    command: serve --port 4096 --hostname 0.0.0.0
+    ports:
+      - "4096:4096"
+    volumes:
+      - ./workspace:/workspace # 代码与图片保存路径，此处挂载项目的工作区
+    environment:
+      - OPENCODE_CONFIG_PATH=/workspace/opencode.json
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
+      - QWEN_API_KEY=${QWEN_API_KEY}
+      - KIMI_API_KEY=${KIMI_API_KEY}
+      - GLM_API_KEY=${GLM_API_KEY}
+      - IMAGE_GEN_API_KEY=${IMAGE_GEN_API_KEY}
+    restart: unless-stopped
