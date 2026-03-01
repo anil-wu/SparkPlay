@@ -41,3 +41,11 @@ yarn-error.log*
 /skills/
 /web/
 /web_admin/
+
+# OpenCode workspace (runtime generated session data)
+/deploy/opencode/workspace/
+/deploy/opencode/workspace/**
+
+# OpenCode local config (may contain secrets)
+/opencode/opencode.json
+deploy/opencode/workspace
