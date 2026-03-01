@@ -78,7 +78,7 @@ async function readJsonResponse(response: Response) {
 async function sparkxRequest(input: {
   apiBaseUrl: string
   token: string
-  method: "GET" | "POST"
+  method: "GET" | "POST" | "PUT"
   pathname: string
   query?: Record<string, string>
   body?: any
@@ -149,7 +149,7 @@ export default tool({
     token: tool.schema.string().describe("用户 token（Bearer）"),
     projectId: tool.schema.number().int().positive().optional().describe("项目 ID（默认从目录推断）"),
     softwareName: tool.schema.string().default("game_client").describe("软件工程名称"),
-    targetDir: tool.schema.string().optional().describe("构建产物目录（相对项目根目录，默认 build/{softwareName}）"),
+    targetDir: tool.schema.string().optional().describe("构建产物目录（相对项目根目录，默认 build）"),
     versionDescription: tool.schema.string().optional().describe("构建版本描述"),
     entry: tool.schema.string().default("index.html").describe("入口文件（相对构建产物根目录）"),
     insecureTls: tool.schema.boolean().optional().describe("允许自签名/不校验证书（仅建议本地开发使用）"),
@@ -167,133 +167,17 @@ export default tool({
     console.log(`[DEBUG] execute: projectId=${projectId}`)
 
     const projectDir = context.directory
-    const targetRel = "build/"
+    const targetRel = (args.targetDir || "build").replace(/\\/g, "/").replace(/\/+$/, "")
     const targetAbs = path.resolve(projectDir, targetRel)
 
     const buildTime = new Date().toISOString()
     const uploadedFiles: Array<{
       path: string
-      fileId: number
-      versionId: number
-      versionNumber: number
       hash: string
       size: number
       lastModified: string
     }> = []
 
-
-    const relFiles = await walkFiles(projectDir, targetRel)
-    let totalSize = 0
-
-    for (const rel of relFiles) {
-      const abs = path.resolve(projectDir, rel)
-      console.log(`[DEBUG] execute: rel="${rel}" abs="${abs}"`)
-      const st = await stat(abs)
-      if (!st.isFile()) continue
-      const content = await readFile(abs)
-      const hash = createHash("sha256").update(content).digest("hex")
-      const sizeBytes = content.length
-      const fileNameInProject = toPosixPath(path.posix.join(targetRel, toPosixPath(rel))).replace(/^\/+/, "")
-      const { fileCategory, fileFormat } = fileMetaByPath(fileNameInProject)
-
-      const pre: any = await sparkxRequest({
-        apiBaseUrl,
-        token: args.token,
-        method: "POST",
-        pathname: "/api/v1/files/preupload",
-        body: {
-          projectId,
-          name: fileNameInProject,
-          fileCategory,
-          fileFormat,
-          sizeBytes,
-          hash,
-        },
-      })
-
-      console.log(`[DEBUG] execute: pre=${JSON.stringify(pre, null, 2)}`) 
-
-      const uploadUrl = String(pre?.uploadUrl || "")
-      const contentType = String(pre?.contentType || "")
-      const fileId = Number(pre?.fileId)
-      const versionId = Number(pre?.versionId)
-      const versionNumber = Number(pre?.versionNumber)
-      if (!uploadUrl || !contentType || !Number.isFinite(fileId) || !Number.isFinite(versionId)) {
-        throw new Error(`preupload response invalid for ${fileNameInProject}`)
-      }
-
-      await putToSignedUrl(uploadUrl, contentType, content)
-      uploadedFiles.push({
-        path: toPosixPath(rel),
-        fileId,
-        versionId,
-        versionNumber,
-        hash,
-        size: sizeBytes,
-        lastModified: new Date(st.mtimeMs).toISOString(),
-      })
-      totalSize += sizeBytes
-    }
-
-    const buildVersionJson = {
-      softwareName: args.softwareName,
-      version: null,
-      versionCode: Math.floor(Date.now() / 1000),
-      versionDescription: args.versionDescription || "",
-      buildCommand: "",
-      buildTime,
-      entry: args.entry,
-      files: uploadedFiles,
-      folders: Array.from(
-        new Set(
-          uploadedFiles
-            .map(f => {
-              const dir = path.posix.dirname(f.path)
-              return dir === "." ? "" : dir
-            })
-            .filter(Boolean),
-        ),
-      ),
-      totalFiles: uploadedFiles.length,
-      totalSize,
-      buildInfo: {
-        npmReturnCode: 0,
-        buildDurationMs: 0,
-        uploaded: true,
-      },
-    }
-
-    console.log(`[DEBUG] execute: targetAbs=${targetAbs}`)
-        
-    const buildVersionJsonAbs = path.resolve(targetAbs, "build_version.json")
-    await writeFile(buildVersionJsonAbs, JSON.stringify(buildVersionJson, null, 2), { encoding: "utf8" })
-    const buildVersionJsonRelInProject = toPosixPath(path.posix.join(targetRel, "build_version.json"))
-    const buildVersionJsonBytes = await readFile(buildVersionJsonAbs)
-    const buildVersionJsonHash = createHash("sha256").update(buildVersionJsonBytes).digest("hex")
-
-    const buildVersionPre: any = await sparkxRequest({
-      apiBaseUrl,
-      token: args.token,
-      method: "POST",
-      pathname: "/api/v1/files/preupload",
-      body: {
-        projectId,
-        name: buildVersionJsonRelInProject,
-        fileCategory: "text",
-        fileFormat: "json",
-        sizeBytes: buildVersionJsonBytes.length,
-        hash: buildVersionJsonHash,
-      },
-    })
-
-    const buildVersionUploadUrl = String(buildVersionPre?.uploadUrl || "")
-    const buildVersionContentType = String(buildVersionPre?.contentType || "")
-    const buildVersionFileId = Number(buildVersionPre?.fileId)
-    const buildVersionFileVersionId = Number(buildVersionPre?.versionId)
-    if (!buildVersionUploadUrl || !buildVersionContentType || !Number.isFinite(buildVersionFileId) || !Number.isFinite(buildVersionFileVersionId)) {
-      throw new Error("preupload response invalid for build_version.json")
-    }
-    await putToSignedUrl(buildVersionUploadUrl, buildVersionContentType, buildVersionJsonBytes)
 
     const softwareListResp: any = await sparkxRequest({
       apiBaseUrl,
@@ -329,22 +213,144 @@ export default tool({
       throw new Error(`invalid software manifest id: ${softwareManifestId}`)
     }
 
-    const buildVersionResp: any = await sparkxRequest({
+    const draftResp: any = await sparkxRequest({
       apiBaseUrl,
       token: args.token,
       method: "POST",
-      pathname: "/api/v1/build-versions",
+      pathname: "/api/v1/build-versions/draft",
       body: {
         projectId,
         softwareManifestId,
         description: args.versionDescription || "",
-        buildVersionFileId: buildVersionFileId,
-        buildVersionFileVersionId: buildVersionFileVersionId,
+        entryPath: args.entry,
+      },
+    })
+    const buildVersionId = Number(draftResp?.buildVersionId)
+    if (!Number.isFinite(buildVersionId) || buildVersionId <= 0) {
+      throw new Error(`invalid buildVersionId: ${draftResp?.buildVersionId}`)
+    }
+    const previewStoragePrefix = String(draftResp?.previewStoragePrefix || "")
+    const entryPath = String(draftResp?.entryPath || args.entry)
+
+    const relFiles = await walkFiles(targetAbs)
+    let totalSize = 0
+
+    for (const rel of relFiles) {
+      const abs = path.resolve(targetAbs, rel)
+      console.log(`[DEBUG] execute: rel="${rel}" abs="${abs}"`)
+      const st = await stat(abs)
+      if (!st.isFile()) continue
+      const content = await readFile(abs)
+      const hash = createHash("sha256").update(content).digest("hex")
+      const sizeBytes = content.length
+      const fileNameInProject = toPosixPath(rel).replace(/^\/+/, "")
+      const { fileFormat } = fileMetaByPath(fileNameInProject)
+
+      const pre: any = await sparkxRequest({
+        apiBaseUrl,
+        token: args.token,
+        method: "POST",
+        pathname: `/api/v1/previews/builds/${buildVersionId}/preupload`,
+        body: {
+          name: fileNameInProject,
+          fileFormat,
+          sizeBytes,
+          hash,
+        },
+      })
+
+      console.log(`[DEBUG] execute: pre=${JSON.stringify(pre, null, 2)}`)
+
+      const uploadUrl = String(pre?.uploadUrl || "")
+      const contentType = String(pre?.contentType || "")
+      if (!uploadUrl || !contentType) {
+        throw new Error(`preupload response invalid for ${fileNameInProject}`)
+      }
+
+      await putToSignedUrl(uploadUrl, contentType, content)
+      uploadedFiles.push({
+        path: fileNameInProject,
+        hash,
+        size: sizeBytes,
+        lastModified: new Date(st.mtimeMs).toISOString(),
+      })
+      totalSize += sizeBytes
+    }
+
+    const buildVersionJson = {
+      softwareName: args.softwareName,
+      version: null,
+      versionCode: Math.floor(Date.now() / 1000),
+      versionDescription: args.versionDescription || "",
+      buildCommand: "",
+      buildTime,
+      entry: entryPath,
+      files: uploadedFiles,
+      folders: Array.from(
+        new Set(
+          uploadedFiles
+            .map(f => {
+              const dir = path.posix.dirname(f.path)
+              return dir === "." ? "" : dir
+            })
+            .filter(Boolean),
+        ),
+      ),
+      totalFiles: uploadedFiles.length,
+      totalSize,
+      buildInfo: {
+        npmReturnCode: 0,
+        buildDurationMs: 0,
+        uploaded: true,
+      },
+    }
+
+    console.log(`[DEBUG] execute: targetAbs=${targetAbs}`)
+        
+    const buildVersionJsonAbs = path.resolve(targetAbs, "build_version.json")
+    await writeFile(buildVersionJsonAbs, JSON.stringify(buildVersionJson, null, 2), { encoding: "utf8" })
+    const buildVersionJsonRelInProject = "build_version.json"
+    const buildVersionJsonBytes = await readFile(buildVersionJsonAbs)
+    const buildVersionJsonHash = createHash("sha256").update(buildVersionJsonBytes).digest("hex")
+
+    const buildVersionPre: any = await sparkxRequest({
+      apiBaseUrl,
+      token: args.token,
+      method: "POST",
+      pathname: "/api/v1/files/preupload",
+      body: {
+        projectId,
+        name: buildVersionJsonRelInProject,
+        fileCategory: "text",
+        fileFormat: "json",
+        sizeBytes: buildVersionJsonBytes.length,
+        hash: buildVersionJsonHash,
       },
     })
 
-    const buildVersionId = Number(buildVersionResp?.buildVersionId)
-    const createdVersionNumber = Number(buildVersionResp?.versionNumber)
+    const buildVersionUploadUrl = String(buildVersionPre?.uploadUrl || "")
+    const buildVersionContentType = String(buildVersionPre?.contentType || "")
+    const buildVersionFileId = Number(buildVersionPre?.fileId)
+    const buildVersionFileVersionId = Number(buildVersionPre?.versionId)
+    if (!buildVersionUploadUrl || !buildVersionContentType || !Number.isFinite(buildVersionFileId) || !Number.isFinite(buildVersionFileVersionId)) {
+      throw new Error("preupload response invalid for build_version.json")
+    }
+    await putToSignedUrl(buildVersionUploadUrl, buildVersionContentType, buildVersionJsonBytes)
+
+    const updatedBuildVersionResp: any = await sparkxRequest({
+      apiBaseUrl,
+      token: args.token,
+      method: "PUT",
+      pathname: `/api/v1/build-versions/${buildVersionId}`,
+      body: {
+        buildVersionFileId: buildVersionFileId,
+        buildVersionFileVersionId: buildVersionFileVersionId,
+        previewStoragePrefix,
+        entryPath,
+      },
+    })
+
+    const createdVersionNumber = Number(draftResp?.versionNumber)
 
     context.metadata({
       title: "sparkx build uploaded",
@@ -373,6 +379,7 @@ export default tool({
           id: buildVersionId,
           versionNumber: createdVersionNumber,
           description: args.versionDescription || "",
+          previewStoragePrefix: String(updatedBuildVersionResp?.previewStoragePrefix || previewStoragePrefix),
         },
       },
       null,
